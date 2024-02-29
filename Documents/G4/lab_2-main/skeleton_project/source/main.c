@@ -9,10 +9,10 @@
  * @brief The main function operating the logic behind the elevator
  */
 
-struct orders
+typedef struct
 {
-    int tickets[0]; // Ticket vector containing orders
-};
+    int tickets[5][3]; // Ticket vector containing orders
+} Orders;
 
 /**
  * @brief makes elevator go to default floor (first floor)
@@ -36,9 +36,44 @@ void set_default_floor(void)
     }
 }
 
+void go_to_floor(Orders orders, int floor)
+{
+    for (int f = 0; f < N_FLOORS; f++)
+    {
+        for (int b = 0; b < N_BUTTONS; b++)
+        {
+            if (floor < f && orders.tickets[f][b] == 1)
+            {
+                elevio_motorDirection(DIRN_UP);
+            }
+            if (floor > f && orders.tickets[f][b] == 1)
+            {
+                elevio_motorDirection(DIRN_DOWN);
+            }
+            if (floor == f && orders.tickets[f][b] == 1)
+            {
+                printf("%d\n", orders.tickets[f][b]);
+                orders.tickets[f][b] = 0;
+                elevio_buttonLamp(f, b, 0); // Turn off lamp
+                elevio_motorDirection(DIRN_STOP);
+            }
+        }
+    }
+}
+
 int main()
 {
     elevio_init();
+
+    Orders orders;
+
+    for (int f = 0; f < N_FLOORS; f++)
+    {
+        for (int b = 0; b < N_BUTTONS; b++)
+        {
+            orders.tickets[f][b] = 0;
+        }
+    }
 
     printf("=== Example Program ===\n");
     printf("Press the stop button on the elevator panel to exit\n");
@@ -49,33 +84,63 @@ int main()
 
     int floorind = -1;
 
-    while (0)
+    while (1)
     {
         int floor = elevio_floorSensor();
-        if (floor != floorind && floor != -1)
+
+        if (floor != -1)
         {
-            printf("%d\n", floor);
+            elevio_floorIndicator(floor);
         }
+
         floorind = floor;
 
         if (floor == 0)
         {
-            elevio_motorDirection(DIRN_UP);
+            // elevio_motorDirection(DIRN_UP);
         }
 
         if (floor == N_FLOORS - 1)
         {
-            elevio_motorDirection(DIRN_DOWN);
+            // elevio_motorDirection(DIRN_DOWN);
         }
 
-        for (int f = 0; f < N_FLOORS - 1; f++)
+        for (int f = 0; f < N_FLOORS; f++)
         {
             for (int b = 0; b < N_BUTTONS; b++)
             {
                 int btnPressed = elevio_callButton(f, b);
-                elevio_buttonLamp(f, b, btnPressed);
+                if (orders.tickets[f][b] != 1 && btnPressed == 1)
+                {
+                    elevio_buttonLamp(f, b, btnPressed); // Skrur på lampen
+                    orders.tickets[f][b] = 1;            // Legger inn bestillingen
+                }
             }
         }
+
+        for (int f = 0; f < N_FLOORS; f++)
+        {
+            for (int b = 0; b < N_BUTTONS; b++)
+            {
+                if (floor < f && floor != -1 && orders.tickets[f][b] == 1)
+                {
+                    elevio_motorDirection(DIRN_UP);
+                }
+                if (floor > f && orders.tickets[f][b] == 1)
+                {
+                    elevio_motorDirection(DIRN_DOWN);
+                }
+                if (floor == f && orders.tickets[f][b] == 1)
+                {
+                    printf("%d\n", orders.tickets[f][b]);
+                    orders.tickets[f][b] = 0;
+                    elevio_buttonLamp(f, b, 0); // Turn off lamp
+                    elevio_motorDirection(DIRN_STOP);
+                }
+            }
+        }
+
+        // go_to_floor(&orders, floor);
 
         if (elevio_obstruction())
         {
