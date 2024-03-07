@@ -177,6 +177,15 @@ int main()
             elevio_stopLamp(0);
         }
 
+        if (elevio_obstruction())
+        {
+            elevio_doorOpenLamp(1);
+        }
+        else
+        {
+            elevio_doorOpenLamp(0);
+        }
+
         if (elevio_stopButton())
         {
             while (elevio_stopButton())
@@ -185,6 +194,7 @@ int main()
                 elevio_stopLamp(1);
             }
             elevio_stopLamp(0);
+
             break;
         }
 
