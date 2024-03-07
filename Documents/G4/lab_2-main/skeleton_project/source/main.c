@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
+#include <unistd.h> //Header file for sleep(). man 3 sleep for details.
+#include <pthread.h>
 #include "driver/elevio.h"
 
 /**
@@ -56,6 +58,27 @@ void go_to_floor(Orders orders, int floor)
                 orders.tickets[f][b] = 0;
                 elevio_buttonLamp(f, b, 0); // Turn off lamp
                 elevio_motorDirection(DIRN_STOP);
+            }
+        }
+    }
+}
+
+void listenOrders(Orders *orders)
+{
+    int seconds_to_sleep = 3;
+    clock_t start_time = clock();
+    while (((clock() - start_time) / CLOCKS_PER_SEC) < seconds_to_sleep)
+    {
+        for (int f = 0; f < N_FLOORS; f++)
+        {
+            for (int b = 0; b < N_BUTTONS; b++)
+            {
+                int btnPressed = elevio_callButton(f, b);
+                if (orders->tickets[f][b] != 1 && btnPressed == 1)
+                {
+                    elevio_buttonLamp(f, b, btnPressed); // Skrur på lampen
+                    orders->tickets[f][b] = 1;           // Legger inn bestillingen
+                }
             }
         }
     }
@@ -124,10 +147,12 @@ int main()
             {
                 if (floor < f && floor != -1 && orders.tickets[f][b] == 1)
                 {
+                    elevio_doorOpenLamp(0); // Turn off lamp when arriving at floor
                     elevio_motorDirection(DIRN_UP);
                 }
                 if (floor > f && orders.tickets[f][b] == 1)
                 {
+                    elevio_doorOpenLamp(0); // Turn off lamp when arriving at floor
                     elevio_motorDirection(DIRN_DOWN);
                 }
                 if (floor == f && orders.tickets[f][b] == 1)
@@ -135,7 +160,10 @@ int main()
                     printf("%d\n", orders.tickets[f][b]);
                     orders.tickets[f][b] = 0;
                     elevio_buttonLamp(f, b, 0); // Turn off lamp
+                    elevio_doorOpenLamp(1);     // Turn on lamp when arriving at floor
                     elevio_motorDirection(DIRN_STOP);
+                    listenOrders(&orders);
+                    elevio_doorOpenLamp(0);
                 }
             }
         }
