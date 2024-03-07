@@ -94,6 +94,7 @@ int main()
     {
         for (int b = 0; b < N_BUTTONS; b++)
         {
+            elevio_buttonLamp(f, b, 0); // Turn off lamp
             orders.tickets[f][b] = 0;
         }
     }
@@ -103,9 +104,8 @@ int main()
 
     elevio_motorDirection(DIRN_UP);
 
-    set_default_floor();
-
-    int floorind = -1;
+    set_default_floor(); // Heis går til 1. etasje ved oppstart
+    MotorDirection direction = DIRN_STOP;
 
     while (1)
     {
@@ -113,21 +113,10 @@ int main()
 
         if (floor != -1)
         {
-            elevio_floorIndicator(floor);
+            elevio_floorIndicator(floor); // Etasjeindikator
         }
 
-        floorind = floor;
-
-        if (floor == 0)
-        {
-            // elevio_motorDirection(DIRN_UP);
-        }
-
-        if (floor == N_FLOORS - 1)
-        {
-            // elevio_motorDirection(DIRN_DOWN);
-        }
-
+        // Registrerer bestilling til etasje
         for (int f = 0; f < N_FLOORS; f++)
         {
             for (int b = 0; b < N_BUTTONS; b++)
@@ -141,26 +130,35 @@ int main()
             }
         }
 
+        // Tar inn bestilling og bestemmer knapplys og motorretning
         for (int f = 0; f < N_FLOORS; f++)
         {
             for (int b = 0; b < N_BUTTONS; b++)
             {
-                if (floor < f && floor != -1 && orders.tickets[f][b] == 1)
+                if (floor < f && floor != -1 && orders.tickets[f][b] == 1 && !elevio_obstruction())
                 {
                     elevio_doorOpenLamp(0); // Turn off lamp when arriving at floor
-                    elevio_motorDirection(DIRN_UP);
+                    if (direction != DIRN_DOWN)
+                    {
+                        direction = DIRN_UP;
+                        elevio_motorDirection(DIRN_UP);
+                    }
                 }
-                if (floor > f && orders.tickets[f][b] == 1)
+                if (floor > f && orders.tickets[f][b] == 1 && !elevio_obstruction())
                 {
                     elevio_doorOpenLamp(0); // Turn off lamp when arriving at floor
-                    elevio_motorDirection(DIRN_DOWN);
+                    if (direction != DIRN_UP)
+                    {
+                        direction = DIRN_DOWN;
+                        elevio_motorDirection(DIRN_DOWN);
+                    }
                 }
                 if (floor == f && orders.tickets[f][b] == 1)
                 {
-                    printf("%d\n", orders.tickets[f][b]);
                     orders.tickets[f][b] = 0;
                     elevio_buttonLamp(f, b, 0); // Turn off lamp
                     elevio_doorOpenLamp(1);     // Turn on lamp when arriving at floor
+                    direction = DIRN_STOP;
                     elevio_motorDirection(DIRN_STOP);
                     listenOrders(&orders);
                     elevio_doorOpenLamp(0);
@@ -181,7 +179,12 @@ int main()
 
         if (elevio_stopButton())
         {
-            elevio_motorDirection(DIRN_STOP);
+            while (elevio_stopButton())
+            {
+                elevio_motorDirection(DIRN_STOP);
+                elevio_stopLamp(1);
+            }
+            elevio_stopLamp(0);
             break;
         }
 
