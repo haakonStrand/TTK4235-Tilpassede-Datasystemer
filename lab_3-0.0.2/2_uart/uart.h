@@ -16,8 +16,9 @@ typedef struct
     volatile uint32_t EVENTS_CTS;
     volatile uint32_t EVENTS_NCTS;
     volatile uint32_t EVENTS_RXDRDY;
-    volatile uint32_t RESERVED1[6];
+    volatile uint32_t RESERVED1[6]; // 4 eller 6?
     volatile uint32_t EVENTS_TXDRDY;
+    volatile uint32_t RESERVED_N2;
     volatile uint32_t EVENTS_ERROR;
     volatile uint32_t RESERVED2[7];
     volatile uint32_t EVENTS_RXTO;
@@ -26,23 +27,27 @@ typedef struct
     volatile uint32_t RESERVED4[64];
     volatile uint32_t INTENSET;
     volatile uint32_t INTENCLR;
-    volatile uint32_t RESERVED5[92];
+    volatile uint32_t RESERVED5[92]; // 93 eller 92?
     volatile uint32_t ERRORSRC;
+    volatile uint32_t RESERVED6[31]; // Skal denne være her eller ikke?
     volatile uint32_t ENABLE;
+    volatile uint32_t RESERVED7; // Skal denne være her
     volatile uint32_t PSELRTS;
     volatile uint32_t PSELTXD;
     volatile uint32_t PSELCTS;
     volatile uint32_t PSELRXD;
     volatile uint32_t RXD;
     volatile uint32_t TXD;
+    volatile uint32_t RESERVED8; // Skal denne være her
     volatile uint32_t BAUDRATE;
+    volatile uint32_t RESERVED9[17]; // Skal denne være her?
     volatile uint32_t CONFIG;
 } NRF_UART_REG;
-
-#endif
 
 void uart_init();
 
 void uart_send(char letter);
 
 void uart_read();
+
+#endif

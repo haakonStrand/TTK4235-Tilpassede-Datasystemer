@@ -28,8 +28,24 @@ void uart_init()
 
 void uart_send(char letter)
 {
+    UART->TASKS_STARTTX = 1;
+    UART->TXD = letter;
+    while(!UART->EVENTS_TXDRDY){
+
+    }
+    UART->TASKS_STOPTX = 1;
+    UART->TASKS_STARTTX = 0;
+    UART->EVENTS_TXDRDY = 0;
 }
 
 void uart_read()
 {
+    char temp;
+    while(!UART->EVENTS_RXDRDY){
+
+    }
+    UART->EVENTS_RXDRDY = 0;
+    temp = UART->RXD;
+    UART->TASKS_STOPTX = 1;
+    return temp;
 }
